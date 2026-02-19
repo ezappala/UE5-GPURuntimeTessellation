@@ -3,25 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PrimitiveSceneProxy.h"
+#include "GPUTessellationComponent.h"
 #include "GPUTessellationMeshBuilder.h"
 #include "GPUTessellationVertexFactory.h"
-#include "GPUTessellationComponent.h"
+#include "PrimitiveSceneProxy.h"
 
 class FMaterialRenderProxy;
 
 /**
  * Dynamic data for patch updates (camera position)
  */
-struct FGPUTessellationDynamicData
-{
-	FVector CameraPosition;
-	FMatrix LocalToWorld;
-	
-	FGPUTessellationDynamicData()
-		: CameraPosition(FVector::ZeroVector)
-		, LocalToWorld(FMatrix::Identity)
-	{}
+struct FGPUTessellationDynamicData {
+    FVector CameraPosition;
+    FMatrix LocalToWorld;
+
+    FGPUTessellationDynamicData()
+        : CameraPosition(FVector::ZeroVector), LocalToWorld(FMatrix::Identity) {}
 };
 
 /**
@@ -30,95 +27,98 @@ struct FGPUTessellationDynamicData
  * Manages rendering representation of the tessellated mesh.
  * Uses pure GPU buffers without CPU readback for rendering.
  */
-class FGPUTessellationSceneProxy final : public FPrimitiveSceneProxy
-{
+class FGPUTessellationSceneProxy final : public FPrimitiveSceneProxy {
 public:
-	FGPUTessellationSceneProxy(UGPUTessellationComponent* Component);
-	virtual ~FGPUTessellationSceneProxy();
+    FGPUTessellationSceneProxy(UGPUTessellationComponent* Component);
+    virtual ~FGPUTessellationSceneProxy() override;
 
-	//~ Begin FPrimitiveSceneProxy Interface
-	virtual SIZE_T GetTypeHash() const override;
-	virtual void GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const override;
-	virtual FPrimitiveViewRelevance GetViewRelevance(const FSceneView* View) const override;
-	virtual uint32 GetMemoryFootprint() const override { return sizeof(*this) + GetAllocatedSize(); }
-	uint32 GetAllocatedSize() const { return FPrimitiveSceneProxy::GetAllocatedSize(); }
-	//~ End FPrimitiveSceneProxy Interface
+    //~ Begin FPrimitiveSceneProxy Interface
+    virtual SIZE_T GetTypeHash() const override;
+    virtual void GetDynamicMeshElements(
+        const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap,
+        FMeshElementCollector& Collector
+    ) const override;
+    virtual FPrimitiveViewRelevance GetViewRelevance(const FSceneView* View) const override;
+    virtual uint32 GetMemoryFootprint() const override { return sizeof(*this) + GetAllocatedSize(); }
+    uint32 GetAllocatedSize() const { return FPrimitiveSceneProxy::GetAllocatedSize(); }
+    //~ End FPrimitiveSceneProxy Interface
 
-	/**
-	 * Update mesh buffers (called from render thread)
-	 */
-	void UpdateMeshBuffers_RenderThread(const FGPUTessellationBuffers& Buffers);
+    /**
+     * Update mesh buffers (called from render thread)
+     */
+    void UpdateMeshBuffers_RenderThread(const FGPUTessellationBuffers& Buffers) const;
 
-	/**
-	 * Update dynamic data (camera position for patch LOD)
-	 */
-	void UpdateDynamicData_RenderThread(FGPUTessellationDynamicData* DynamicData);
-
-private:
-	/** Render single mesh (original mode) */
-	void RenderSingleMesh(
-		const TArray<const FSceneView*>& Views,
-		const FSceneViewFamily& ViewFamily,
-		uint32 VisibilityMap,
-		FMeshElementCollector& Collector,
-		FMaterialRenderProxy* WireframeMaterialInstance) const;
-
-	/** Render all patches (spatial patch mode) */
-	void RenderPatches(
-		const TArray<const FSceneView*>& Views,
-		const FSceneViewFamily& ViewFamily,
-		uint32 VisibilityMap,
-		FMeshElementCollector& Collector,
-		FMaterialRenderProxy* WireframeMaterialInstance) const;
-
-	/** Initialize vertex factories for all patches */
-	void InitializePatchVertexFactories(FRHICommandListImmediate& RHICmdList);
+    /**
+     * Update dynamic data (camera position for patch LOD)
+     */
+    void UpdateDynamicData_RenderThread(const FGPUTessellationDynamicData* DynamicData);
 
 private:
-	/** Material render proxy */
-	FMaterialRenderProxy* MaterialProxy;
+    /** Render single mesh (original mode) */
+    void RenderSingleMesh(
+        const TArray<const FSceneView*>& Views,
+        const FSceneViewFamily& ViewFamily,
+        uint32 VisibilityMap,
+        FMeshElementCollector& Collector,
+        const FMaterialRenderProxy* WireframeMaterialInstance
+    ) const;
 
-	/** Tessellation settings */
-	FGPUTessellationSettings Settings;
+    /** Render all patches (spatial patch mode) */
+    void RenderPatches(
+        const TArray<const FSceneView*>& Views,
+        const FSceneViewFamily& ViewFamily,
+        uint32 VisibilityMap,
+        FMeshElementCollector& Collector,
+        const FMaterialRenderProxy* WireframeMaterialInstance
+    ) const;
 
-	/** Cached transforms and textures for patch regeneration */
-	FMatrix CachedLocalToWorld;
-	TObjectPtr<UTexture> CachedDisplacementTexture;
-	TObjectPtr<UTexture> CachedSubtractTexture;
-	TObjectPtr<UTexture> CachedNormalMapTexture;
+    /** Initialize vertex factories for all patches */
+    void InitializePatchVertexFactories(FRHICommandListImmediate& RHICmdList);
 
-	/** GPU buffers (persistent, no CPU copy) - for single mesh mode */
-	mutable FGPUTessellationBuffers GPUBuffers;
+    /** Material render proxy */
+    FMaterialRenderProxy* MaterialProxy;
 
-	/** GPU patch buffers - for spatial patch mode */
-	mutable FGPUTessellationPatchBuffers GPUPatchBuffers;
+    /** Tessellation settings */
+    FGPUTessellationSettings Settings;
 
-	/** Vertex factory for GPU buffer rendering - single mesh */
-	mutable FGPUTessellationVertexFactory VertexFactory;
+    /** Cached transforms and textures for patch regeneration */
+    FMatrix CachedLocalToWorld;
+    TObjectPtr<UTexture> CachedDisplacementTexture;
+    TObjectPtr<UTexture> CachedSubtractTexture;
+    TObjectPtr<UTexture> CachedNormalMapTexture;
 
-	/** Vertex factories for patch rendering - one per patch (array of pointers since vertex factory requires constructor args) */
-	mutable TArray<FGPUTessellationVertexFactory*> PatchVertexFactories;
+    /** GPU buffers (persistent, no CPU copy) - for single mesh mode */
+    mutable FGPUTessellationBuffers GPUBuffers;
 
-	/** Is mesh data valid and ready to render */
-	mutable bool bMeshValid;
+    /** GPU patch buffers - for spatial patch mode */
+    mutable FGPUTessellationPatchBuffers GPUPatchBuffers;
 
-	/** Are we using spatial patch mode? */
-	bool bUsePatchMode;
+    /** Vertex factory for GPU buffer rendering - single mesh */
+    mutable FGPUTessellationVertexFactory VertexFactory;
 
-	/** Material relevance */
-	FMaterialRelevance MaterialRelevance;
+    /** Vertex factories for patch rendering - one per patch (array of pointers since vertex factory requires constructor args) */
+    mutable TArray<FGPUTessellationVertexFactory*> PatchVertexFactories;
 
-	/** Enable debug logging */
-	bool bEnableDebugLogging;
+    /** Is mesh data valid and ready to render */
+    mutable bool bMeshValid;
 
-	/** Show patch debug visualization (bounds boxes and centers) */
-	bool bShowPatchDebugVisualization;
+    /** Are we using spatial patch mode? */
+    bool bUsePatchMode;
 
-	/** Last log time for throttling */
-	mutable double LastLogTime;
+    /** Material relevance */
+    FMaterialRelevance MaterialRelevance;
 
-	/** Last camera position used for patch generation (to detect movement) */
-	mutable FVector LastCameraPosition;
+    /** Enable debug logging */
+    bool bEnableDebugLogging;
 
-	friend class UGPUTessellationComponent;
+    /** Show patch debug visualization (bounds boxes and centers) */
+    bool bShowPatchDebugVisualization;
+
+    /** Last log time for throttling */
+    mutable double LastLogTime;
+
+    /** Last camera position used for patch generation (to detect movement) */
+    mutable FVector LastCameraPosition;
+
+    friend class UGPUTessellationComponent;
 };

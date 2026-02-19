@@ -10,9 +10,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
 #include "GPUTessellationComponent.h"
 #include "Engine/Texture2D.h"
+#include "Engine/World.h"
+#include "GameFramework/Actor.h"
 #include "Materials/MaterialInterface.h"
 #include "GPUTessellationExamples.generated.h"
 
@@ -21,28 +22,26 @@
 // ============================================================================
 
 UCLASS(Blueprintable)
-class GPURUNTIMETESSELLATION_API AGPUTessellatedPlaneActor : public AActor
-{
-	GENERATED_BODY()
+class GPURUNTIMETESSELLATION_API AGPUTessellatedPlaneActor : public AActor {
+    GENERATED_BODY()
 
 public:
-	AGPUTessellatedPlaneActor()
-	{
-		// Create tessellation component
-		TessellationComponent = CreateDefaultSubobject<UGPUTessellationComponent>(TEXT("TessellationComponent"));
-		RootComponent = TessellationComponent;
+    AGPUTessellatedPlaneActor() {
+        // Create tessellation component
+        TessellationComponent = CreateDefaultSubobject<UGPUTessellationComponent>(TEXT("TessellationComponent"));
+        RootComponent = TessellationComponent;
 
-		// Configure basic settings
-		TessellationComponent->TessellationSettings.TessellationFactor = 16;
-		TessellationComponent->TessellationSettings.PlaneSizeX = 1000.0f;
-		TessellationComponent->TessellationSettings.PlaneSizeY = 1000.0f;
-		TessellationComponent->TessellationSettings.DisplacementIntensity = 100.0f;
-		TessellationComponent->TessellationSettings.bUseSineWaveDisplacement = true;
-		TessellationComponent->bAutoUpdate = true;
-	}
+        // Configure basic settings
+        TessellationComponent->TessellationSettings.TessellationFactor = 16;
+        TessellationComponent->TessellationSettings.PlaneSizeX = 1000.0f;
+        TessellationComponent->TessellationSettings.PlaneSizeY = 1000.0f;
+        TessellationComponent->TessellationSettings.DisplacementIntensity = 100.0f;
+        TessellationComponent->TessellationSettings.bUseSineWaveDisplacement = true;
+        TessellationComponent->bAutoUpdate = true;
+    }
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tessellation")
-	UGPUTessellationComponent* TessellationComponent;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tessellation")
+    UGPUTessellationComponent* TessellationComponent;
 };
 
 // ============================================================================
@@ -50,67 +49,58 @@ public:
 // ============================================================================
 
 UCLASS(Blueprintable)
-class GPURUNTIMETESSELLATION_API AGPUTessellatedTerrain : public AActor
-{
-	GENERATED_BODY()
+class GPURUNTIMETESSELLATION_API AGPUTessellatedTerrain : public AActor {
+    GENERATED_BODY()
 
 public:
-	AGPUTessellatedTerrain()
-	{
-		TessellationComponent = CreateDefaultSubobject<UGPUTessellationComponent>(TEXT("TessellationComponent"));
-		RootComponent = TessellationComponent;
+    AGPUTessellatedTerrain() {
+        TessellationComponent = CreateDefaultSubobject<UGPUTessellationComponent>(TEXT("TessellationComponent"));
+        RootComponent = TessellationComponent;
 
-		// Configure for terrain
-		TessellationComponent->TessellationSettings.TessellationFactor = 32;
-		TessellationComponent->TessellationSettings.PlaneSizeX = 10000.0f;  // 100m terrain
-		TessellationComponent->TessellationSettings.PlaneSizeY = 10000.0f;
-		TessellationComponent->TessellationSettings.DisplacementIntensity = 500.0f;  // 5m max height
-		TessellationComponent->TessellationSettings.bUseSineWaveDisplacement = false;  // Use texture
-		
-		// Enable dynamic LOD
-		TessellationComponent->TessellationSettings.LODMode = EGPUTessellationLODMode::DistanceBased;
-		TessellationComponent->TessellationSettings.MaxTessellationDistance = 5000.0f;
-		TessellationComponent->TessellationSettings.MinTessellationFactor = 4;
-		TessellationComponent->TessellationSettings.LODTransitionSpeed = 2.0f;
-		
-		// Normal calculation
-		TessellationComponent->TessellationSettings.NormalCalculationMethod = EGPUTessellationNormalMethod::FiniteDifference;
-		TessellationComponent->bAutoUpdate = true;
-	}
+        // Configure for terrain
+        TessellationComponent->TessellationSettings.TessellationFactor = 32;
+        TessellationComponent->TessellationSettings.PlaneSizeX = 10000.0f; // 100m terrain
+        TessellationComponent->TessellationSettings.PlaneSizeY = 10000.0f;
+        TessellationComponent->TessellationSettings.DisplacementIntensity = 500.0f; // 5m max height
+        TessellationComponent->TessellationSettings.bUseSineWaveDisplacement = false; // Use texture
 
-	virtual void BeginPlay() override
-	{
-		Super::BeginPlay();
+        // Enable dynamic LOD
+        TessellationComponent->TessellationSettings.LODMode = EGPUTessellationLODMode::DistanceBased;
+        TessellationComponent->TessellationSettings.MaxTessellationDistance = 5000.0f;
+        TessellationComponent->TessellationSettings.MinTessellationFactor = 4;
+        TessellationComponent->TessellationSettings.LODTransitionSpeed = 2.0f;
 
-		// Load displacement texture at runtime
-		if (DisplacementTexturePath.IsValid())
-		{
-			UTexture2D* LoadedTexture = LoadObject<UTexture2D>(nullptr, *DisplacementTexturePath.ToString());
-			if (LoadedTexture)
-			{
-				TessellationComponent->SetDisplacementTexture(LoadedTexture);
-			}
-		}
+        // Normal calculation
+        TessellationComponent->TessellationSettings.NormalCalculationMethod =
+            EGPUTessellationNormalMethod::FiniteDifference;
+        TessellationComponent->bAutoUpdate = true;
+    }
 
-		// Load material
-		if (TerrainMaterialPath.IsValid())
-		{
-			UMaterialInterface* LoadedMaterial = LoadObject<UMaterialInterface>(nullptr, *TerrainMaterialPath.ToString());
-			if (LoadedMaterial)
-			{
-				TessellationComponent->SetMaterial(0, LoadedMaterial);
-			}
-		}
-	}
+    virtual void BeginPlay() override {
+        Super::BeginPlay();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tessellation")
-	UGPUTessellationComponent* TessellationComponent;
+        // Load displacement texture at runtime
+        if (DisplacementTexturePath.IsValid()) {
+            UTexture2D* LoadedTexture = LoadObject<UTexture2D>(nullptr, *DisplacementTexturePath.ToString());
+            if (LoadedTexture != nullptr) { TessellationComponent->SetDisplacementTexture(LoadedTexture); }
+        }
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tessellation")
-	FSoftObjectPath DisplacementTexturePath;
+        // Load material
+        if (TerrainMaterialPath.IsValid()) {
+            UMaterialInterface* LoadedMaterial = LoadObject<UMaterialInterface>(nullptr,
+                *TerrainMaterialPath.ToString());
+            if (LoadedMaterial != nullptr) { TessellationComponent->SetMaterial(0, LoadedMaterial); }
+        }
+    }
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tessellation")
-	FSoftObjectPath TerrainMaterialPath;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tessellation")
+    UGPUTessellationComponent* TessellationComponent;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tessellation")
+    FSoftObjectPath DisplacementTexturePath;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tessellation")
+    FSoftObjectPath TerrainMaterialPath;
 };
 
 // ============================================================================
@@ -118,49 +108,46 @@ public:
 // ============================================================================
 
 UCLASS(Blueprintable)
-class GPURUNTIMETESSELLATION_API AGPUWaterSurface : public AActor
-{
-	GENERATED_BODY()
+class GPURUNTIMETESSELLATION_API AGPUWaterSurface : public AActor {
+    GENERATED_BODY()
 
 public:
-	AGPUWaterSurface()
-	{
-		TessellationComponent = CreateDefaultSubobject<UGPUTessellationComponent>(TEXT("TessellationComponent"));
-		RootComponent = TessellationComponent;
+    AGPUWaterSurface() {
+        TessellationComponent = CreateDefaultSubobject<UGPUTessellationComponent>(TEXT("TessellationComponent"));
+        RootComponent = TessellationComponent;
 
-		// Configure for water
-		TessellationComponent->TessellationSettings.TessellationFactor = 24;
-		TessellationComponent->TessellationSettings.PlaneSizeX = 5000.0f;
-		TessellationComponent->TessellationSettings.PlaneSizeY = 5000.0f;
-		TessellationComponent->TessellationSettings.DisplacementIntensity = 50.0f;  // Wave height
-		TessellationComponent->TessellationSettings.bUseSineWaveDisplacement = true;  // Procedural waves
-		
-		// Water-specific settings
-		TessellationComponent->TessellationSettings.LODMode = EGPUTessellationLODMode::DistanceBased;
-		TessellationComponent->TessellationSettings.MaxTessellationDistance = 3000.0f;
-		TessellationComponent->bAutoUpdate = true;
-	}
+        // Configure for water
+        TessellationComponent->TessellationSettings.TessellationFactor = 24;
+        TessellationComponent->TessellationSettings.PlaneSizeX = 5000.0f;
+        TessellationComponent->TessellationSettings.PlaneSizeY = 5000.0f;
+        TessellationComponent->TessellationSettings.DisplacementIntensity = 50.0f; // Wave height
+        TessellationComponent->TessellationSettings.bUseSineWaveDisplacement = true; // Procedural waves
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Water")
-	UGPUTessellationComponent* TessellationComponent;
+        // Water-specific settings
+        TessellationComponent->TessellationSettings.LODMode = EGPUTessellationLODMode::DistanceBased;
+        TessellationComponent->TessellationSettings.MaxTessellationDistance = 3000.0f;
+        TessellationComponent->bAutoUpdate = true;
+    }
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water")
-	float WaveSpeed = 1.0f;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Water")
+    UGPUTessellationComponent* TessellationComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water")
-	float WaveAmplitude = 1.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water")
+    float WaveSpeed = 1.0f;
 
-	virtual void Tick(float DeltaTime) override
-	{
-		Super::Tick(DeltaTime);
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water")
+    float WaveAmplitude = 1.0f;
 
-		// Animate wave intensity over time
-		float Time = GetWorld()->GetTimeSeconds();
-		float AnimatedIntensity = 50.0f + FMath::Sin(Time * WaveSpeed) * 25.0f * WaveAmplitude;
-		
-		TessellationComponent->TessellationSettings.DisplacementIntensity = AnimatedIntensity;
-		TessellationComponent->UpdateTessellatedMesh();
-	}
+    virtual void Tick(const float DeltaTime) override {
+        Super::Tick(DeltaTime);
+
+        // Animate wave intensity over time
+        const float Time = GetWorld()->GetTimeSeconds();
+        const float AnimatedIntensity = 50.0f + FMath::Sin(Time * WaveSpeed) * 25.0f * WaveAmplitude;
+
+        TessellationComponent->TessellationSettings.DisplacementIntensity = AnimatedIntensity;
+        TessellationComponent->UpdateTessellatedMesh();
+    }
 };
 
 // ============================================================================
@@ -168,83 +155,72 @@ public:
 // ============================================================================
 
 UCLASS(Blueprintable, BlueprintType)
-class GPURUNTIMETESSELLATION_API AGPUTessellationController : public AActor
-{
-	GENERATED_BODY()
+class GPURUNTIMETESSELLATION_API AGPUTessellationController : public AActor {
+    GENERATED_BODY()
 
 public:
-	AGPUTessellationController()
-	{
-		PrimaryActorTick.bCanEverTick = true;
-	}
+    AGPUTessellationController() { PrimaryActorTick.bCanEverTick = true; }
 
-	// Blueprint callable function to update tessellation settings
-	UFUNCTION(BlueprintCallable, Category = "Tessellation")
-	void UpdateTessellationSettings(
-		AActor* TargetActor,
-		float TessellationFactor,
-		float DisplacementIntensity,
-		bool bEnableLOD)
-	{
-		if (!TargetActor) return;
+    // Blueprint callable function to update tessellation settings
+    UFUNCTION(BlueprintCallable, Category = "Tessellation")
+    void UpdateTessellationSettings(
+        AActor* TargetActor,
+        const float TessellationFactor,
+        const float DisplacementIntensity,
+        const bool bEnableLOD
+    ) {
+        if (TargetActor == nullptr) { return; }
 
-		UGPUTessellationComponent* TessComp = TargetActor->FindComponentByClass<UGPUTessellationComponent>();
-		if (TessComp)
-		{
-			FGPUTessellationSettings NewSettings = TessComp->TessellationSettings;
-			NewSettings.TessellationFactor = FMath::RoundToInt(TessellationFactor);
-			NewSettings.DisplacementIntensity = DisplacementIntensity;
-			NewSettings.LODMode = bEnableLOD ? EGPUTessellationLODMode::DistanceBased : EGPUTessellationLODMode::Disabled;
-			
-			TessComp->UpdateSettings(NewSettings);
-		}
-	}
+        UGPUTessellationComponent* TessComp = TargetActor->FindComponentByClass<UGPUTessellationComponent>();
+        if (TessComp != nullptr) {
+            FGPUTessellationSettings NewSettings = TessComp->TessellationSettings;
+            NewSettings.TessellationFactor = FMath::RoundToInt(TessellationFactor);
+            NewSettings.DisplacementIntensity = DisplacementIntensity;
+            NewSettings.LODMode = bEnableLOD
+                ? EGPUTessellationLODMode::DistanceBased
+                : EGPUTessellationLODMode::Disabled;
 
-	// Blueprint callable function to set textures
-	UFUNCTION(BlueprintCallable, Category = "Tessellation")
-	void SetTessellationTextures(
-		AActor* TargetActor,
-		UTexture* DisplacementTexture,
-		UTexture* SubtractTexture)
-	{
-		if (!TargetActor) return;
+            TessComp->UpdateSettings(NewSettings);
+        }
+    }
 
-		UGPUTessellationComponent* TessComp = TargetActor->FindComponentByClass<UGPUTessellationComponent>();
-		if (TessComp)
-		{
-			if (DisplacementTexture)
-			{
-				TessComp->SetDisplacementTexture(DisplacementTexture);
-			}
-			if (SubtractTexture)
-			{
-				TessComp->SetSubtractTexture(SubtractTexture);
-			}
-		}
-	}
+    // Blueprint callable function to set textures
+    UFUNCTION(BlueprintCallable, Category = "Tessellation")
+    void SetTessellationTextures(
+        AActor* TargetActor,
+        UTexture* DisplacementTexture,
+        UTexture* SubtractTexture
+    ) {
+        if (TargetActor == nullptr) { return; }
 
-	// Blueprint pure function to get tessellation stats
-	UFUNCTION(BlueprintPure, Category = "Tessellation")
-	void GetTessellationStats(
-		AActor* TargetActor,
-		int32& OutVertexCount,
-		int32& OutTriangleCount,
-		FIntPoint& OutResolution)
-	{
-		OutVertexCount = 0;
-		OutTriangleCount = 0;
-		OutResolution = FIntPoint::ZeroValue;
+        UGPUTessellationComponent* TessComp = TargetActor->FindComponentByClass<UGPUTessellationComponent>();
+        if (TessComp != nullptr) {
+            if (DisplacementTexture != nullptr) { TessComp->SetDisplacementTexture(DisplacementTexture); }
+            if (SubtractTexture != nullptr) { TessComp->SetSubtractTexture(SubtractTexture); }
+        }
+    }
 
-		if (!TargetActor) return;
+    // Blueprint pure function to get tessellation stats
+    UFUNCTION(BlueprintPure, Category = "Tessellation")
+    static void GetTessellationStats(
+        const AActor* TargetActor,
+        int32& OutVertexCount,
+        int32& OutTriangleCount,
+        FIntPoint& OutResolution
+    ) {
+        OutVertexCount = 0;
+        OutTriangleCount = 0;
+        OutResolution = FIntPoint::ZeroValue;
 
-		UGPUTessellationComponent* TessComp = TargetActor->FindComponentByClass<UGPUTessellationComponent>();
-		if (TessComp)
-		{
-			OutVertexCount = TessComp->GetVertexCount();
-			OutTriangleCount = TessComp->GetTriangleCount();
-			OutResolution = TessComp->GetTessellationResolution();
-		}
-	}
+        if (TargetActor == nullptr) { return; }
+
+        const UGPUTessellationComponent* TessComp = TargetActor->FindComponentByClass<UGPUTessellationComponent>();
+        if (TessComp != nullptr) {
+            OutVertexCount = TessComp->GetVertexCount();
+            OutTriangleCount = TessComp->GetTriangleCount();
+            OutResolution = TessComp->GetTessellationResolution();
+        }
+    }
 };
 
 /*

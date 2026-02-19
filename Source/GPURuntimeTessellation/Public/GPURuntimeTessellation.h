@@ -11,10 +11,9 @@
  * Pure compute shader-based tessellation system that replaces Hull/Domain shaders
  * with compute shaders for universal platform support.
  */
-class FGPURuntimeTessellationModule : public IModuleInterface
-{
+class FGPURuntimeTessellationModule final : public IModuleInterface {
 public:
-	/** IModuleInterface implementation */
-	virtual void StartupModule() override;
-	virtual void ShutdownModule() override;
+    /** IModuleInterface implementation */
+    virtual void StartupModule() override;
+    virtual void ShutdownModule() override;
 };
