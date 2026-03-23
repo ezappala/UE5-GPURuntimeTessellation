@@ -125,7 +125,7 @@ public:
         SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<float2>, InputUVs)
 
         SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float3>, OutputPositions)
-    END_SHADER_PARAMETER_STRUCT()
+        END_SHADER_PARAMETER_STRUCT()
 
     static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters) {
         return IsFeatureLevelSupported(Parameters.Platform, ERHIFeatureLevel::SM5);

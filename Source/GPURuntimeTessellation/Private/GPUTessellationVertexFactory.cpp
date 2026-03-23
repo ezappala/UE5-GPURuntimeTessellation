@@ -1,6 +1,8 @@
 // Licensed under the MIT License. See LICENSE file in the project root.
 
 #include "GPUTessellationVertexFactory.h"
+
+#include "MaterialDomain.h"
 #include "MeshBatch.h"
 #include "MeshDrawShaderBindings.h"
 #include "MeshMaterialShader.h"
