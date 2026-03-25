@@ -15,8 +15,8 @@
 #include "Materials/Material.h"
 #include "Materials/MaterialRenderProxy.h"
 
-FGPUTessellationSceneProxy::FGPUTessellationSceneProxy(UGPUTessellationComponent* Component)
-    : FPrimitiveSceneProxy(Component),
+FGPUTessellationSceneProxy::FGPUTessellationSceneProxy(
+    UGPUTessellationComponent* Component) : FPrimitiveSceneProxy(Component),
     MaterialProxy(nullptr),
     Settings(Component->TessellationSettings),
     CachedLocalToWorld(Component->GetComponentTransform().ToMatrixWithScale()),
@@ -43,11 +43,21 @@ FGPUTessellationSceneProxy::FGPUTessellationSceneProxy(UGPUTessellationComponent
             UE_LOG(LogTemp, Warning, TEXT("GPUTessellation: Scene Proxy Constructor:"));
             UE_LOG(LogTemp, Warning, TEXT("  Component->Bounds: %s"), *CompBounds.ToString());
             UE_LOG(LogTemp, Warning, TEXT("  CalcBounds(Transform): %s"), *RecalcBounds.ToString());
-            UE_LOG(LogTemp, Warning, TEXT("  Transform Location: %s Scale: %s"),
-                *ComponentTransform.GetLocation().ToString(), *ComponentTransform.GetScale3D().ToString());
-            const float TotalDisp = Settings.DisplacementIntensity + FMath::Abs(Settings.DisplacementOffset);
-            UE_LOG(LogTemp, Warning, TEXT("  Settings: PlaneSizeX:%.1f PlaneSizeY:%.1f Disp:%.1f"),
-                Settings.PlaneSizeX, Settings.PlaneSizeY, TotalDisp);
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("  Transform Location: %s Scale: %s"),
+                *ComponentTransform.GetLocation().ToString(),
+                *ComponentTransform.GetScale3D().ToString());
+            const float TotalDisp = Settings.DisplacementIntensity + FMath::Abs(
+                Settings.DisplacementOffset);
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("  Settings: PlaneSizeX:%.1f PlaneSizeY:%.1f Disp:%.1f"),
+                Settings.PlaneSizeX,
+                Settings.PlaneSizeY,
+                TotalDisp);
         }
     }
 
@@ -59,11 +69,16 @@ FGPUTessellationSceneProxy::FGPUTessellationSceneProxy(UGPUTessellationComponent
     } else if (UMaterial::GetDefaultMaterial(MD_Surface) != nullptr) {
         MaterialProxy = UMaterial::GetDefaultMaterial(MD_Surface)->GetRenderProxy();
         auto shader_platform = GetFeatureLevelShaderPlatform_Checked(GetScene().GetFeatureLevel());
-        MaterialRelevance = UMaterial::GetDefaultMaterial(MD_Surface)->GetRelevance(shader_platform);
+        MaterialRelevance = UMaterial::GetDefaultMaterial(MD_Surface)->
+            GetRelevance(shader_platform);
     }
 
     if (bEnableDebugLogging) {
-        UE_LOG(LogTemp, Warning, TEXT("GPUTessellation: Material setup - HasMaterial:%d"), MaterialProxy != nullptr);
+        UE_LOG(
+            LogTemp,
+            Warning,
+            TEXT("GPUTessellation: Material setup - HasMaterial:%d"),
+            MaterialProxy != nullptr);
     }
 
     // Generate initial mesh data (PURE GPU - NO CPU READBACK!)
@@ -73,7 +88,9 @@ FGPUTessellationSceneProxy::FGPUTessellationSceneProxy(UGPUTessellationComponent
     // Get camera position if available
     if (UWorld* World = Component->GetWorld()) {
         if (APlayerController* PC = World->GetFirstPlayerController()) {
-            if (PC->PlayerCameraManager) { CameraPosition = PC->PlayerCameraManager->GetCameraLocation(); }
+            if (PC->PlayerCameraManager) {
+                CameraPosition = PC->PlayerCameraManager->GetCameraLocation();
+            }
         }
     }
 
@@ -86,13 +103,21 @@ FGPUTessellationSceneProxy::FGPUTessellationSceneProxy(UGPUTessellationComponent
         CameraPosition = ComponentLocation + FVector(0, 0, 2000.0f); // 2000 units above
 
         if (bEnableDebugLogging) {
-            UE_LOG(LogTemp, Warning,
-                TEXT("GPUTessellation: Camera position unavailable, using default position above component: %s"),
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT(
+                    "GPUTessellation: Camera position unavailable, using default position above component: %s"
+                ),
                 *CameraPosition.ToString());
         }
     } else if (bEnableDebugLogging) {
-        UE_LOG(LogTemp, Warning, TEXT("GPUTessellation: Camera position: %s (Component at: %s)"),
-            *CameraPosition.ToString(), *Component->GetComponentLocation().ToString());
+        UE_LOG(
+            LogTemp,
+            Warning,
+            TEXT("GPUTessellation: Camera position: %s (Component at: %s)"),
+            *CameraPosition.ToString(),
+            *Component->GetComponentLocation().ToString());
     }
 
     // Prepare settings with effective tessellation factor for LOD mode
@@ -105,11 +130,16 @@ FGPUTessellationSceneProxy::FGPUTessellationSceneProxy(UGPUTessellationComponent
             const int32 OriginalFactor = Settings.TessellationFactor;
             const int32 MinFactor = Settings.MinTessellationFactor;
             const int32 MaxFactor = Settings.MaxTessellationFactor;
-            UE_LOG(LogTemp, Warning,
+            UE_LOG(
+                LogTemp,
+                Warning,
                 TEXT(
                     "GPUTessellation: SceneProxy using LOD-adjusted TessellationFactor: %d (Original: %d, Min: %d, Max: %d)"
                 ),
-                Component->LastAppliedTessFactor, OriginalFactor, MinFactor, MaxFactor);
+                Component->LastAppliedTessFactor,
+                OriginalFactor,
+                MinFactor,
+                MaxFactor);
         }
     }
 
@@ -117,16 +147,22 @@ FGPUTessellationSceneProxy::FGPUTessellationSceneProxy(UGPUTessellationComponent
     if (bUsePatchMode) {
         // SPATIAL PATCH MODE: Generate multiple patches with per-patch LOD
         ENQUEUE_RENDER_COMMAND(GeneratePatchedMesh)(
-            [this, EffectiveSettings, LocalToWorld = Component->GetComponentTransform().ToMatrixWithScale(),
+            [this, EffectiveSettings, LocalToWorld = Component->GetComponentTransform().
+                ToMatrixWithScale(),
                 CameraPosition,
-                DisplacementTexture = Component->DisplacementTexture, SubtractTexture = Component->SubtractTexture,
+                DisplacementTexture = Component->DisplacementTexture, SubtractTexture = Component->
+                SubtractTexture,
                 NormalMapTexture = Component->NormalMapTexture,
-                bDebugLog = this->bEnableDebugLogging]
-        (FRHICommandListImmediate& RHICmdList) {
+                bDebugLog = this->bEnableDebugLogging](FRHICommandListImmediate& RHICmdList) {
                 if (bDebugLog) {
-                    UE_LOG(LogTemp, Warning,
-                        TEXT("GPUTessellation: Starting PATCH generation on render thread - Patches:%dx%d"),
-                        EffectiveSettings.PatchCountX, EffectiveSettings.PatchCountY);
+                    UE_LOG(
+                        LogTemp,
+                        Warning,
+                        TEXT(
+                            "GPUTessellation: Starting PATCH generation on render thread - Patches:%dx%d"
+                        ),
+                        EffectiveSettings.PatchCountX,
+                        EffectiveSettings.PatchCountY);
                 }
 
                 FGPUTessellationMeshBuilder MeshBuilder;
@@ -159,8 +195,12 @@ FGPUTessellationSceneProxy::FGPUTessellationSceneProxy(UGPUTessellationComponent
                     for (const FGPUTessellationBuffers& Patch : GPUPatchBuffers.PatchBuffers) {
                         if (Patch.IsValid()) { ValidPatches++; }
                     }
-                    UE_LOG(LogTemp, Warning, TEXT("GPUTessellation: Patches generated - Total:%d Valid:%d"),
-                        TotalPatches, ValidPatches);
+                    UE_LOG(
+                        LogTemp,
+                        Warning,
+                        TEXT("GPUTessellation: Patches generated - Total:%d Valid:%d"),
+                        TotalPatches,
+                        ValidPatches);
                 }
 
                 // Initialize vertex factories for all patches
@@ -169,22 +209,30 @@ FGPUTessellationSceneProxy::FGPUTessellationSceneProxy(UGPUTessellationComponent
                 bMeshValid = GPUPatchBuffers.IsValid();
 
                 if (bDebugLog) {
-                    UE_LOG(LogTemp, Warning, TEXT("GPUTessellation: Patch mode initialized - MeshValid:%d"),
+                    UE_LOG(
+                        LogTemp,
+                        Warning,
+                        TEXT("GPUTessellation: Patch mode initialized - MeshValid:%d"),
                         bMeshValid);
                 }
             });
     } else {
         // SINGLE MESH MODE: Generate one mesh (original behavior)
         ENQUEUE_RENDER_COMMAND(GenerateTessellatedMesh)(
-            [this, EffectiveSettings, LocalToWorld = Component->GetComponentTransform().ToMatrixWithScale(),
+            [this, EffectiveSettings, LocalToWorld = Component->GetComponentTransform().
+                ToMatrixWithScale(),
                 CameraPosition,
-                DisplacementTexture = Component->DisplacementTexture, SubtractTexture = Component->SubtractTexture,
+                DisplacementTexture = Component->DisplacementTexture, SubtractTexture = Component->
+                SubtractTexture,
                 NormalMapTexture = Component->NormalMapTexture,
-                bDebugLog = this->bEnableDebugLogging]
-        (FRHICommandListImmediate& RHICmdList) {
+                bDebugLog = this->bEnableDebugLogging](FRHICommandListImmediate& RHICmdList) {
                 if (bDebugLog) {
-                    UE_LOG(LogTemp, Warning,
-                        TEXT("GPUTessellation: Starting mesh generation on render thread with TessFactor:%d"),
+                    UE_LOG(
+                        LogTemp,
+                        Warning,
+                        TEXT(
+                            "GPUTessellation: Starting mesh generation on render thread with TessFactor:%d"
+                        ),
                         EffectiveSettings.TessellationFactor);
                 }
 
@@ -192,33 +240,58 @@ FGPUTessellationSceneProxy::FGPUTessellationSceneProxy(UGPUTessellationComponent
                 FRDGBuilder GraphBuilder(RHICmdList);
 
                 // Execute tessellation pipeline
-                MeshBuilder.ExecuteTessellationPipeline(GraphBuilder, EffectiveSettings, LocalToWorld, CameraPosition,
-                    DisplacementTexture, SubtractTexture, NormalMapTexture, GPUBuffers);
+                MeshBuilder.ExecuteTessellationPipeline(
+                    GraphBuilder,
+                    EffectiveSettings,
+                    LocalToWorld,
+                    CameraPosition,
+                    DisplacementTexture,
+                    SubtractTexture,
+                    NormalMapTexture,
+                    GPUBuffers);
 
                 GraphBuilder.Execute();
 
                 if (bDebugLog) {
-                    UE_LOG(LogTemp, Warning,
+                    UE_LOG(
+                        LogTemp,
+                        Warning,
                         TEXT(
                             "GPUTessellation: After Execute - VertexCount:%d IndexCount:%d PositionBuffer:%d NormalBuffer:%d"
                         ),
-                        GPUBuffers.VertexCount, GPUBuffers.IndexCount,
-                        GPUBuffers.PositionBuffer.IsValid(), GPUBuffers.NormalBuffer.IsValid());
+                        GPUBuffers.VertexCount,
+                        GPUBuffers.IndexCount,
+                        GPUBuffers.PositionBuffer.IsValid(),
+                        GPUBuffers.NormalBuffer.IsValid());
                 }
 
                 // Initialize vertex factory if buffers are valid
                 if (GPUBuffers.IsValid()) {
                     bMeshValid = true;
-                    VertexFactory.SetBuffers(GPUBuffers.PositionSRV, GPUBuffers.NormalSRV, GPUBuffers.UVSRV);
+                    VertexFactory.SetBuffers(
+                        GPUBuffers.PositionSRV,
+                        GPUBuffers.NormalSRV,
+                        GPUBuffers.UVSRV);
                     VertexFactory.InitResource(RHICmdList);
 
                     if (bDebugLog) {
-                        UE_LOG(LogTemp, Warning,
-                            TEXT("GPUTessellation: Mesh initialized - %d vertices, %d indices, Resolution: %dx%d"),
-                            GPUBuffers.VertexCount, GPUBuffers.IndexCount, GPUBuffers.ResolutionX,
+                        UE_LOG(
+                            LogTemp,
+                            Warning,
+                            TEXT(
+                                "GPUTessellation: Mesh initialized - %d vertices, %d indices, Resolution: %dx%d"
+                            ),
+                            GPUBuffers.VertexCount,
+                            GPUBuffers.IndexCount,
+                            GPUBuffers.ResolutionX,
                             GPUBuffers.ResolutionY);
                     }
-                } else { UE_LOG(LogTemp, Error, TEXT("GPUTessellation: Failed to initialize - buffers invalid")); }
+                } else {
+                    UE_LOG(
+                        LogTemp,
+                        Error,
+                        TEXT("GPUTessellation: Failed to initialize - buffers invalid"));
+                }
             });
     }
     // Set primitive properties
@@ -229,8 +302,12 @@ FGPUTessellationSceneProxy::FGPUTessellationSceneProxy(UGPUTessellationComponent
     bAffectDistanceFieldLighting = true;
 
     if (bEnableDebugLogging) {
-        UE_LOG(LogTemp, Warning, TEXT("GPUTessellation: Scene proxy created - WillEverBeLit:%d CastShadow:%d"),
-            bWillEverBeLit, bCastDynamicShadow);
+        UE_LOG(
+            LogTemp,
+            Warning,
+            TEXT("GPUTessellation: Scene proxy created - WillEverBeLit:%d CastShadow:%d"),
+            bWillEverBeLit,
+            bCastDynamicShadow);
     }
 }
 
@@ -268,17 +345,27 @@ void FGPUTessellationSceneProxy::GetDynamicMeshElements(
         if (CurrentTime - LastLogTime >= 2.0) {
             LastLogTime = CurrentTime;
             if (bUsePatchMode) {
-                UE_LOG(LogTemp, Warning,
+                UE_LOG(
+                    LogTemp,
+                    Warning,
                     TEXT(
                         "GPUTessellation: GetDynamicMeshElements PATCH MODE - Valid:%d Material:%d TotalPatches:%d VisibilityMap:0x%X"
                     ),
-                    bMeshValid, MaterialProxy != nullptr, GPUPatchBuffers.GetTotalPatchCount(), VisibilityMap);
+                    bMeshValid,
+                    MaterialProxy != nullptr,
+                    GPUPatchBuffers.GetTotalPatchCount(),
+                    VisibilityMap);
             } else {
-                UE_LOG(LogTemp, Warning,
+                UE_LOG(
+                    LogTemp,
+                    Warning,
                     TEXT(
                         "GPUTessellation: GetDynamicMeshElements SINGLE MESH - Valid:%d Material:%d Buffers:%d VertexCount:%d IndexCount:%d"
                     ),
-                    bMeshValid, MaterialProxy != nullptr, GPUBuffers.IsValid(), GPUBuffers.VertexCount,
+                    bMeshValid,
+                    MaterialProxy != nullptr,
+                    GPUBuffers.IsValid(),
+                    GPUBuffers.VertexCount,
                     GPUBuffers.IndexCount);
             }
         }
@@ -303,7 +390,10 @@ void FGPUTessellationSceneProxy::GetDynamicMeshElements(
             const double CurrentTime = FPlatformTime::Seconds();
             if (CurrentTime - LastCameraPosLogTime >= 2.0) {
                 LastCameraPosLogTime = CurrentTime;
-                UE_LOG(LogTemp, Warning, TEXT("GPUTessellation: Current Camera Position from View: %s"),
+                UE_LOG(
+                    LogTemp,
+                    Warning,
+                    TEXT("GPUTessellation: Current Camera Position from View: %s"),
                     *CurrentCameraPosition.ToString());
             }
         }
@@ -345,9 +435,16 @@ FPrimitiveViewRelevance FGPUTessellationSceneProxy::GetViewRelevance(const FScen
     if (bEnableDebugLogging) {
         static bool bLoggedRelevance = false;
         if (!bLoggedRelevance && bMeshValid) {
-            UE_LOG(LogTemp, Warning,
-                TEXT("GPUTessellation: GetViewRelevance - Draw:%d Shadow:%d Dynamic:%d RenderInMain:%d"),
-                Result.bDrawRelevance, Result.bShadowRelevance, Result.bDynamicRelevance, Result.bRenderInMainPass);
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT(
+                    "GPUTessellation: GetViewRelevance - Draw:%d Shadow:%d Dynamic:%d RenderInMain:%d"
+                ),
+                Result.bDrawRelevance,
+                Result.bShadowRelevance,
+                Result.bDynamicRelevance,
+                Result.bRenderInMainPass);
             bLoggedRelevance = true;
         }
     }
@@ -355,7 +452,8 @@ FPrimitiveViewRelevance FGPUTessellationSceneProxy::GetViewRelevance(const FScen
     return Result;
 }
 
-void FGPUTessellationSceneProxy::UpdateMeshBuffers_RenderThread(const FGPUTessellationBuffers& Buffers) const {
+void FGPUTessellationSceneProxy::UpdateMeshBuffers_RenderThread(
+    const FGPUTessellationBuffers& Buffers) const {
     check(IsInRenderingThread());
 
     GPUBuffers = Buffers;
@@ -369,7 +467,8 @@ void FGPUTessellationSceneProxy::UpdateMeshBuffers_RenderThread(const FGPUTessel
     // Pure GPU - no CPU buffer uploads!
 }
 
-void FGPUTessellationSceneProxy::UpdateDynamicData_RenderThread(const FGPUTessellationDynamicData* DynamicData) {
+void FGPUTessellationSceneProxy::UpdateDynamicData_RenderThread(
+    const FGPUTessellationDynamicData* DynamicData) {
     check(IsInRenderingThread());
 
     if (!DynamicData || !bUsePatchMode) {
@@ -390,8 +489,11 @@ void FGPUTessellationSceneProxy::UpdateDynamicData_RenderThread(const FGPUTessel
         const double CurrentTime = FPlatformTime::Seconds();
         if (CurrentTime - LastUpdateLogTime >= 2.0) {
             LastUpdateLogTime = CurrentTime;
-            UE_LOG(LogTemp, Warning,
-                TEXT("GPUTessellation: UpdateDynamicData - Regenerating patches with camera at: %s"),
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("GPUTessellation: UpdateDynamicData - Regenerating patches with camera at: %s"
+                ),
                 *CameraPosition.ToString());
         }
     }
@@ -409,8 +511,10 @@ void FGPUTessellationSceneProxy::UpdateDynamicData_RenderThread(const FGPUTessel
                 GraphBuilder,
                 SceneProxy->Settings,
                 ComponentTransform,
-                CameraPosition, // Updated camera position from component!
-                nullptr, // ViewFrustum - could pass from component if needed
+                CameraPosition,
+                // Updated camera position from component!
+                nullptr,
+                // ViewFrustum - could pass from component if needed
                 SceneProxy->Settings.PatchCountX,
                 SceneProxy->Settings.PatchCountY,
                 SceneProxy->CachedDisplacementTexture.Get(),
@@ -468,7 +572,11 @@ void FGPUTessellationSceneProxy::RenderSingleMesh(
 
 #if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
             // Render bounds
-            RenderBounds(Collector.GetPDI(ViewIndex), ViewFamily.EngineShowFlags, GetBounds(), IsSelected());
+            RenderBounds(
+                Collector.GetPDI(ViewIndex),
+                ViewFamily.EngineShowFlags,
+                GetBounds(),
+                IsSelected());
 #endif
         }
     }
@@ -497,12 +605,17 @@ void FGPUTessellationSceneProxy::RenderPatches(
                 // Skip culled patches
                 if (!PatchInfo.bVisible) {
                     if (bEnableDebugLogging) {
-                        UE_LOG(LogTemp, Warning, TEXT("    RenderPatch[%d]: SKIPPED - not visible"), PatchIndex);
+                        UE_LOG(
+                            LogTemp,
+                            Warning,
+                            TEXT("    RenderPatch[%d]: SKIPPED - not visible"),
+                            PatchIndex);
                     }
                     continue;
                 }
 
-                const FGPUTessellationBuffers& PatchBuffer = GPUPatchBuffers.PatchBuffers[PatchIndex];
+                const FGPUTessellationBuffers& PatchBuffer = GPUPatchBuffers.PatchBuffers[
+                    PatchIndex];
 
                 // Skip invalid patches
                 if (!PatchBuffer.IsValid()) {
@@ -510,7 +623,9 @@ void FGPUTessellationSceneProxy::RenderPatches(
                     static TSet<int32> LoggedInvalidPatches;
                     if (!LoggedInvalidPatches.Contains(PatchIndex)) {
                         LoggedInvalidPatches.Add(PatchIndex);
-                        UE_LOG(LogTemp, Error,
+                        UE_LOG(
+                            LogTemp,
+                            Error,
                             TEXT(
                                 "GPUTessellation: Patch[%d] has INVALID buffer! Verts:%d Indices:%d PosBuffer:%d NormalBuffer:%d UVBuffer:%d IndexBuffer:%d"
                             ),
@@ -526,14 +641,21 @@ void FGPUTessellationSceneProxy::RenderPatches(
                 }
 
                 // Make sure we have a vertex factory for this patch
-                if (!PatchVertexFactories.IsValidIndex(PatchIndex) || !PatchVertexFactories[PatchIndex]) {
+                if (!PatchVertexFactories.IsValidIndex(PatchIndex) || !PatchVertexFactories[
+                    PatchIndex]) {
                     // Only log error once per patch to avoid spam
                     static TSet<int32> LoggedMissingVF;
                     if (!LoggedMissingVF.Contains(PatchIndex)) {
                         LoggedMissingVF.Add(PatchIndex);
-                        UE_LOG(LogTemp, Error,
-                            TEXT("GPUTessellation: Patch[%d] has NO vertex factory! ArraySize:%d TotalPatches:%d"),
-                            PatchIndex, PatchVertexFactories.Num(), TotalPatches);
+                        UE_LOG(
+                            LogTemp,
+                            Error,
+                            TEXT(
+                                "GPUTessellation: Patch[%d] has NO vertex factory! ArraySize:%d TotalPatches:%d"
+                            ),
+                            PatchIndex,
+                            PatchVertexFactories.Num(),
+                            TotalPatches);
                     }
                     continue;
                 }
@@ -543,7 +665,10 @@ void FGPUTessellationSceneProxy::RenderPatches(
                     static TSet<int32> LoggedUninitializedVF;
                     if (!LoggedUninitializedVF.Contains(PatchIndex)) {
                         LoggedUninitializedVF.Add(PatchIndex);
-                        UE_LOG(LogTemp, Error, TEXT("GPUTessellation: Patch[%d] vertex factory NOT INITIALIZED!"),
+                        UE_LOG(
+                            LogTemp,
+                            Error,
+                            TEXT("GPUTessellation: Patch[%d] vertex factory NOT INITIALIZED!"),
                             PatchIndex);
                     }
                     continue;
@@ -575,23 +700,33 @@ void FGPUTessellationSceneProxy::RenderPatches(
 
                 // Create a dynamic primitive uniform buffer for this patch
                 // that includes the correct bounds for culling
-                FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Collector.AllocateOneFrameResource<
-                    FDynamicPrimitiveUniformBuffer>();
+                FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Collector.
+                    AllocateOneFrameResource<
+                        FDynamicPrimitiveUniformBuffer>();
                 DynamicPrimitiveUniformBuffer.Set(
                     Collector.GetRHICommandList(),
-                    GetLocalToWorld(), // LocalToWorld
-                    GetLocalToWorld(), // PreviousLocalToWorld (same for now)
-                    PatchWorldBounds, // WorldBounds - use patch-specific world bounds!
-                    PatchLocalBounds, // LocalBounds - transformed to local space
-                    false, // bReceivesDecals
-                    false, // bHasPrecomputedVolumetricLightmap
+                    GetLocalToWorld(),
+                    // LocalToWorld
+                    GetLocalToWorld(),
+                    // PreviousLocalToWorld (same for now)
+                    PatchWorldBounds,
+                    // WorldBounds - use patch-specific world bounds!
+                    PatchLocalBounds,
+                    // LocalBounds - transformed to local space
+                    false,
+                    // bReceivesDecals
+                    false,
+                    // bHasPrecomputedVolumetricLightmap
                     false // bOutputVelocity
                 );
-                BatchElement.PrimitiveUniformBufferResource = &DynamicPrimitiveUniformBuffer.UniformBuffer;
+                BatchElement.PrimitiveUniformBufferResource = &DynamicPrimitiveUniformBuffer.
+                    UniformBuffer;
                 BatchElement.PrimitiveIdMode = PrimID_ForceZero; // Setup mesh batch
                 Mesh.bWireframe = AllowDebugViewmodes() && ViewFamily.EngineShowFlags.Wireframe;
                 Mesh.VertexFactory = PatchVertexFactories[PatchIndex];
-                Mesh.MaterialRenderProxy = Mesh.bWireframe ? WireframeMaterialInstance : MaterialProxy;
+                Mesh.MaterialRenderProxy = Mesh.bWireframe
+                    ? WireframeMaterialInstance
+                    : MaterialProxy;
                 Mesh.ReverseCulling = IsLocalToWorldDeterminantNegative();
                 Mesh.Type = PT_TriangleList;
                 Mesh.DepthPriorityGroup = SDPG_World;
@@ -604,7 +739,11 @@ void FGPUTessellationSceneProxy::RenderPatches(
 
 #if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
             // Render bounds
-            RenderBounds(Collector.GetPDI(ViewIndex), ViewFamily.EngineShowFlags, GetBounds(), IsSelected());
+            RenderBounds(
+                Collector.GetPDI(ViewIndex),
+                ViewFamily.EngineShowFlags,
+                GetBounds(),
+                IsSelected());
 
             // Debug: Draw patch boundaries (only if explicitly enabled via checkbox)
             if (bShowPatchDebugVisualization) {
@@ -612,7 +751,8 @@ void FGPUTessellationSceneProxy::RenderPatches(
 
                 // Draw each patch's bounds
                 for (int32 PatchIndex = 0; PatchIndex < TotalPatches; ++PatchIndex) {
-                    const FGPUTessellationPatchInfo& PatchInfo = GPUPatchBuffers.PatchInfo[PatchIndex];
+                    const FGPUTessellationPatchInfo& PatchInfo = GPUPatchBuffers.PatchInfo[
+                        PatchIndex];
 
                     // Color: green for visible, red for culled, blue for different LODs
                     FColor PatchColor = PatchInfo.bVisible ? FColor::Green : FColor::Red;
@@ -626,7 +766,14 @@ void FGPUTessellationSceneProxy::RenderPatches(
                     DrawWireBox(PDI, PatchInfo.WorldBounds, PatchColor, SDPG_World, 3.0f);
 
                     // Draw a sphere at the patch center
-                    DrawWireSphere(PDI, PatchInfo.WorldCenter, PatchColor, 10.0f, 8, SDPG_World, 2.0f);
+                    DrawWireSphere(
+                        PDI,
+                        PatchInfo.WorldCenter,
+                        PatchColor,
+                        10.0f,
+                        8,
+                        SDPG_World,
+                        2.0f);
                 }
             }
 #endif
@@ -641,22 +788,33 @@ void FGPUTessellationSceneProxy::RenderPatches(
 
         if (FrameCounter % 60 == 0 || LastRenderedCount != RenderedPatches) {
             LastRenderedCount = RenderedPatches;
-            UE_LOG(LogTemp, Warning, TEXT("GPUTessellation: Rendered %d/%d patches (Frame %d)"),
-                RenderedPatches, TotalPatches, FrameCounter);
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("GPUTessellation: Rendered %d/%d patches (Frame %d)"),
+                RenderedPatches,
+                TotalPatches,
+                FrameCounter);
 
             // Log first few patch positions
             if (GPUPatchBuffers.PatchInfo.Num() >= 4) {
                 for (int32 i = 0; i < FMath::Min(4, GPUPatchBuffers.PatchInfo.Num()); ++i) {
                     const FGPUTessellationPatchInfo& PatchInf = GPUPatchBuffers.PatchInfo[i];
-                    UE_LOG(LogTemp, Warning, TEXT("  Patch[%d] Center: %s Visible:%d"),
-                        i, *PatchInf.WorldCenter.ToString(), PatchInf.bVisible);
+                    UE_LOG(
+                        LogTemp,
+                        Warning,
+                        TEXT("  Patch[%d] Center: %s Visible:%d"),
+                        i,
+                        *PatchInf.WorldCenter.ToString(),
+                        PatchInf.bVisible);
                 }
             }
         }
     }
 }
 
-void FGPUTessellationSceneProxy::InitializePatchVertexFactories(FRHICommandListImmediate& RHICmdList) {
+void FGPUTessellationSceneProxy::InitializePatchVertexFactories(
+    FRHICommandListImmediate& RHICmdList) {
     const int32 TotalPatches = GPUPatchBuffers.GetTotalPatchCount();
 
     // Release and delete old factories
@@ -673,7 +831,8 @@ void FGPUTessellationSceneProxy::InitializePatchVertexFactories(FRHICommandListI
     // Create and initialize each factory
     for (int32 i = 0; i < TotalPatches; ++i) {
         if (GPUPatchBuffers.PatchBuffers[i].IsValid()) {
-            FGPUTessellationVertexFactory* VF = new FGPUTessellationVertexFactory(GetScene().GetFeatureLevel());
+            FGPUTessellationVertexFactory* VF = new FGPUTessellationVertexFactory(
+                GetScene().GetFeatureLevel());
             VF->SetBuffers(
                 GPUPatchBuffers.PatchBuffers[i].PositionSRV,
                 GPUPatchBuffers.PatchBuffers[i].NormalSRV,

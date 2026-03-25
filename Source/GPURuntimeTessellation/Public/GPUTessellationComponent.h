@@ -57,7 +57,10 @@ struct FGPUTessellationSettings {
     GENERATED_BODY()
 
     /** Base tessellation factor (grid resolution multiplier) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tessellation",
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "Tessellation",
         meta = (
             ClampMin = "1", ClampMax = "512",
             UIMin = "1", UIMax = "512",
@@ -65,15 +68,27 @@ struct FGPUTessellationSettings {
     int32 TessellationFactor = 16;
 
     /** Size of the plane in X direction (local space) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Geometry", meta = (ClampMin = "1.0", ClampMax = "10000.0"))
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "Geometry",
+        meta = (ClampMin = "1.0", ClampMax = "10000.0"))
     float PlaneSizeX = 1000.0f;
 
     /** Size of the plane in Y direction (local space) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Geometry", meta = (ClampMin = "1.0", ClampMax = "10000.0"))
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "Geometry",
+        meta = (ClampMin = "1.0", ClampMax = "10000.0"))
     float PlaneSizeY = 1000.0f;
 
     /** Displacement intensity (height multiplier) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Displacement", meta = (ClampMin = "0.0"))
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "Displacement",
+        meta = (ClampMin = "0.0"))
     float DisplacementIntensity = 100.0f;
 
     /** Displacement offset (vertical shift) */
@@ -91,15 +106,22 @@ struct FGPUTessellationSettings {
     /** Use distance to bounds instead of pivot for LOD (more accurate, slight overhead) */
 #define USE_DISTANCE_TO_BOUNDS_EDIT_CONDITION \
     "LODMode == EGPUTessellationLODMode::DistanceBased || LODMode == EGPUTessellationLODMode::DistanceBasedDiscrete"
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LOD",
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "LOD",
         meta = (EditCondition = USE_DISTANCE_TO_BOUNDS_EDIT_CONDITION, EditConditionHides))
     bool bUseDistanceToBounds = true;
 
     // ============ Discrete LOD Settings ============
 
     /** Discrete tessellation levels (ordered from closest to farthest) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LOD|Discrete",
-        meta = (EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBasedDiscrete", EditConditionHides))
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "LOD|Discrete",
+        meta = (EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBasedDiscrete",
+            EditConditionHides))
     TArray<EGPUTessellationPatchLevel> DiscreteLODLevels = {
         EGPUTessellationPatchLevel::Patch_64,
         EGPUTessellationPatchLevel::Patch_32,
@@ -108,31 +130,47 @@ struct FGPUTessellationSettings {
     };
 
     /** Distance thresholds for each discrete level (in unscaled units, ordered from closest to farthest) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LOD|Discrete",
-        meta = (EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBasedDiscrete", EditConditionHides))
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "LOD|Discrete",
+        meta = (EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBasedDiscrete",
+            EditConditionHides))
     TArray<float> DiscreteLODDistances = {2000.0f, 5000.0f, 10000.0f, 20000.0f};
 
     // ============ Spatial Patch Settings (WIP - Not Fully Implemented) ============
 
     /** Number of patch subdivisions in X direction (creates PatchCountX * PatchCountY patches) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LOD|Patches",
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "LOD|Patches",
         meta = (
             ClampMin = "1", ClampMax = "32",
             UIMin = "1", UIMax = "16",
-            EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBasedPatches", EditConditionHides))
+            EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBasedPatches",
+            EditConditionHides))
     int32 PatchCountX = 4;
 
     /** Number of patch subdivisions in Y direction (creates PatchCountX * PatchCountY patches) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LOD|Patches",
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "LOD|Patches",
         meta = (
             ClampMin = "1", ClampMax = "32",
             UIMin = "1", UIMax = "16",
-            EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBasedPatches", EditConditionHides))
+            EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBasedPatches",
+            EditConditionHides))
     int32 PatchCountY = 4;
 
     /** Patch levels for distance-based LOD (ordered from closest to farthest) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LOD|Patches",
-        meta = (EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBasedPatches", EditConditionHides))
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "LOD|Patches",
+        meta = (EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBasedPatches",
+            EditConditionHides))
     TArray<EGPUTessellationPatchLevel> PatchLevels = {
         EGPUTessellationPatchLevel::Patch_64,
         EGPUTessellationPatchLevel::Patch_32,
@@ -142,69 +180,105 @@ struct FGPUTessellationSettings {
     };
 
     /** Distance thresholds for each patch level (in unscaled units, ordered from closest to farthest) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LOD|Patches",
-        meta = (EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBasedPatches", EditConditionHides))
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "LOD|Patches",
+        meta = (EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBasedPatches",
+            EditConditionHides))
     TArray<float> PatchDistances = {2000.0f, 5000.0f, 10000.0f, 20000.0f, 40000.0f};
 
     /** Enable frustum culling for patches (skip patches outside view) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LOD|Patches",
-        meta = (EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBasedPatches", EditConditionHides))
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "LOD|Patches",
+        meta = (EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBasedPatches",
+            EditConditionHides))
     bool bEnablePatchCulling = true;
 
     /** Maximum tessellation factor at close range (LOD Mode only) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LOD",
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "LOD",
         meta = (
             ClampMin = "1", ClampMax = "512",
             UIMin = "8", UIMax = "512",
-            EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBased", EditConditionHides))
+            EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBased", EditConditionHides
+        ))
     int32 MaxTessellationFactor = 64;
 
     /** Minimum tessellation factor at max distance (LOD Mode only) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LOD",
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "LOD",
         meta = (
             ClampMin = "1", ClampMax = "512",
             UIMin = "1", UIMax = "128",
-            EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBased", EditConditionHides))
+            EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBased", EditConditionHides
+        ))
     int32 MinTessellationFactor = 8;
 
     /** Minimum distance for LOD transitions (within this distance, uses MaxTessellationFactor) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LOD",
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "LOD",
         meta = (
             ClampMin = "0.0", ClampMax = "500000.0",
-            EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBased", EditConditionHides))
+            EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBased", EditConditionHides
+        ))
     float MinTessellationDistance = 1000.0f;
 
     /** Maximum distance for LOD transitions (beyond this distance, uses MinTessellationFactor) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LOD",
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "LOD",
         meta = (
             ClampMin = "100.0", ClampMax = "500000.0",
-            EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBased", EditConditionHides))
+            EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBased", EditConditionHides
+        ))
     float MaxTessellationDistance = 50000.0f;
 
     /** Smooth transition speed between LOD levels (higher = faster transitions) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LOD",
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "LOD",
         meta = (
             ClampMin = "0.1", ClampMax = "10.0",
-            EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBased", EditConditionHides))
+            EditCondition = "LODMode == EGPUTessellationLODMode::DistanceBased", EditConditionHides
+        ))
     float LODTransitionSpeed = 2.0f;
 
     /** Hysteresis to prevent LOD oscillation (minimum difference before triggering regeneration) */
 #define LOD_HYSTERESIS_EDIT_CONDITION \
     "LODMode == EGPUTessellationLODMode::DistanceBased || LODMode == EGPUTessellationLODMode::DistanceBasedPatches"
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LOD",
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "LOD",
         meta = (
             ClampMin = "0", ClampMax = "16",
             EditCondition = LOD_HYSTERESIS_EDIT_CONDITION, EditConditionHides))
     int32 LODHysteresis = 2;
 
     /** Density texture for spatially-varying tessellation (R channel: 0=low detail, 1=high detail) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LOD",
-        meta = (EditCondition = "LODMode == EGPUTessellationLODMode::DensityTexture", EditConditionHides))
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "LOD",
+        meta = (EditCondition = "LODMode == EGPUTessellationLODMode::DensityTexture",
+            EditConditionHides))
     TObjectPtr<UTexture2D> DensityTexture = nullptr;
 
     /** Normal calculation method */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Normals")
-    EGPUTessellationNormalMethod NormalCalculationMethod = EGPUTessellationNormalMethod::FiniteDifference;
+    EGPUTessellationNormalMethod NormalCalculationMethod =
+        EGPUTessellationNormalMethod::FiniteDifference;
 
     /** Invert calculated normals */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Normals")
@@ -212,7 +286,10 @@ struct FGPUTessellationSettings {
 
     /** Normal smoothing factor (0 = sharp detail from texture, 1 = smooth averaged normals)
      * - Blends between finite difference and geometry-based normal calculation */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Normals",
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "Normals",
         meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
     float NormalSmoothingFactor = 0.0f;
 
@@ -232,7 +309,9 @@ struct FGPUTessellationSettings {
  * Pure compute shader-based tessellation component that replaces Hull/Domain shaders.
  * Generates a tessellated plane with displacement mapping entirely on the GPU.
  */
-UCLASS(ClassGroup = (Rendering), meta = (BlueprintSpawnableComponent),
+UCLASS(
+    ClassGroup = (Rendering),
+    meta = (BlueprintSpawnableComponent),
     hidecategories = (Object, LOD, Physics, Collision))
 class GPURUNTIMETESSELLATION_API UGPUTessellationComponent : public UMeshComponent {
     GENERATED_BODY()
@@ -244,7 +323,8 @@ public:
     virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
     virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
     virtual void GetUsedMaterials(
-        TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials = false
+        TArray<UMaterialInterface*>& OutMaterials,
+        bool bGetDebugMaterials = false
     ) const override;
     virtual int32 GetNumMaterials() const override;
     virtual UMaterialInterface* GetMaterial(int32 ElementIndex) const override;
@@ -252,7 +332,9 @@ public:
 
     //~ Begin USceneComponent Interface
     virtual void TickComponent(
-        float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction
+        float DeltaTime,
+        ELevelTick TickType,
+        FActorComponentTickFunction* ThisTickFunction
     ) override;
     //~ End USceneComponent Interface
 
@@ -284,7 +366,10 @@ public:
      * Supports both UTexture2D and UTextureRenderTarget2D */
 #define NORMAL_MAP_TEXTURE_EDIT_CONDITION \
     "TessellationSettings.NormalCalculationMethod == EGPUTessellationNormalMethod::FromNormalMap"
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GPU Tessellation",
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "GPU Tessellation",
         meta = (EditCondition = NORMAL_MAP_TEXTURE_EDIT_CONDITION, EditConditionHides))
     TObjectPtr<UTexture> NormalMapTexture;
 
@@ -301,9 +386,17 @@ public:
     bool bAutoUpdateRenderTargets = true;
 
     /** Limit render target update rate (FPS) - 0 means unlimited (update every frame) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GPU Tessellation|Render Target",
-        meta = (ClampMin = "0", ClampMax = "120", UIMin = "0", UIMax = "120", EditCondition = "bAutoUpdateRenderTargets"
-            , EditConditionHides))
+    UPROPERTY(
+        EditAnywhere,
+        BlueprintReadWrite,
+        Category = "GPU Tessellation|Render Target",
+        meta = (
+            ClampMin = "0",
+            ClampMax = "120",
+            UIMin = "0",
+            UIMax = "120",
+            EditCondition = "bAutoUpdateRenderTargets",
+            EditConditionHides))
     int32 RenderTargetUpdateFPS = 60;
 
     /** Enable debug logging (throttled to every 2 seconds) */
@@ -375,7 +468,10 @@ private:
     virtual void SendRenderDynamicData_Concurrent() override;
 
     /** Current LOD level (smoothly interpolated) */
-    int32 CalculateLODFactorScaled(float Distance, float ScaledMinDistance, float ScaledMaxDistance) const;
+    int32 CalculateLODFactorScaled(
+        float Distance,
+        float ScaledMinDistance,
+        float ScaledMaxDistance) const;
 
     /** Calculate target tessellation factor based on distance (legacy - not scale-aware) */
     int32 CalculateLODFactor(float Distance) const;

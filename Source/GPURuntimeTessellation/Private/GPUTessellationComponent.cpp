@@ -15,8 +15,10 @@
 #include "EditorViewportClient.h"
 #endif
 
-UGPUTessellationComponent::UGPUTessellationComponent(const FObjectInitializer& ObjectInitializer)
-    : Super(ObjectInitializer), LastCameraPosition(FVector::ZeroVector), CurrentResolution(32, 32) {
+UGPUTessellationComponent::UGPUTessellationComponent(
+    const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer),
+    LastCameraPosition(FVector::ZeroVector),
+    CurrentResolution(32, 32) {
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bStartWithTickEnabled = true;
 
@@ -36,14 +38,17 @@ UGPUTessellationComponent::UGPUTessellationComponent(const FObjectInitializer& O
 }
 
 FPrimitiveSceneProxy* UGPUTessellationComponent::CreateSceneProxy() {
-    if (TessellationSettings.TessellationFactor > 0.0f) { return new FGPUTessellationSceneProxy(this); }
+    if (TessellationSettings.TessellationFactor > 0.0f) {
+        return new FGPUTessellationSceneProxy(this);
+    }
     return nullptr;
 }
 
 FBoxSphereBounds UGPUTessellationComponent::CalcBounds(const FTransform& LocalToWorld) const {
     // Calculate bounds based on plane size and displacement (plane is XZ, Y is up)
     const float HalfSizeX = TessellationSettings.PlaneSizeX * 0.5f;
-    const float HalfSizeZ = TessellationSettings.PlaneSizeY * 0.5f; // PlaneSizeY is actually Z dimension
+    const float HalfSizeZ = TessellationSettings.PlaneSizeY * 0.5f;
+    // PlaneSizeY is actually Z dimension
     const float MaxDisplacement = TessellationSettings.DisplacementIntensity + FMath::Abs(
         TessellationSettings.DisplacementOffset);
 
@@ -55,8 +60,12 @@ FBoxSphereBounds UGPUTessellationComponent::CalcBounds(const FTransform& LocalTo
         FMath::IsNearlyZero(Scale3D.Z, MinScale)) {
         // This is an error condition - always log as Warning
         if (bEnableDebugLogging) {
-            UE_LOG(LogTemp, Warning,
-                TEXT("GPUTessellation: CalcBounds - ZERO OR NEAR-ZERO SCALE DETECTED: %s - Using identity scale"),
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT(
+                    "GPUTessellation: CalcBounds - ZERO OR NEAR-ZERO SCALE DETECTED: %s - Using identity scale"
+                ),
                 *Scale3D.ToString());
         }
         // Use a transform with identity scale
@@ -83,10 +92,17 @@ FBoxSphereBounds UGPUTessellationComponent::CalcBounds(const FTransform& LocalTo
         const double CurrentTime = FPlatformTime::Seconds();
         if (CurrentTime - LastLogTime >= 2.0) {
             LastLogTime = CurrentTime;
-            UE_LOG(LogTemp, Log,
-                TEXT("GPUTessellation: CalcBounds - PlaneSizeX:%.1f PlaneSizeZ:%.1f MaxDisp:%.1f Scale:%s Result:%s"),
-                TessellationSettings.PlaneSizeX, TessellationSettings.PlaneSizeY, MaxDisplacement,
-                *Scale3D.ToString(), *Result.ToString());
+            UE_LOG(
+                LogTemp,
+                Log,
+                TEXT(
+                    "GPUTessellation: CalcBounds - PlaneSizeX:%.1f PlaneSizeZ:%.1f MaxDisp:%.1f Scale:%s Result:%s"
+                ),
+                TessellationSettings.PlaneSizeX,
+                TessellationSettings.PlaneSizeY,
+                MaxDisplacement,
+                *Scale3D.ToString(),
+                *Result.ToString());
         }
     }
 
@@ -94,7 +110,8 @@ FBoxSphereBounds UGPUTessellationComponent::CalcBounds(const FTransform& LocalTo
 }
 
 void UGPUTessellationComponent::GetUsedMaterials(
-    TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials
+    TArray<UMaterialInterface*>& OutMaterials,
+    bool bGetDebugMaterials
 ) const { if (Material) { OutMaterials.AddUnique(Material); } }
 
 int32 UGPUTessellationComponent::GetNumMaterials() const { return Material ? 1 : 0; }
@@ -104,7 +121,9 @@ UMaterialInterface* UGPUTessellationComponent::GetMaterial(const int32 ElementIn
 }
 
 void UGPUTessellationComponent::TickComponent(
-    const float DeltaTime, const ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction
+    const float DeltaTime,
+    const ELevelTick TickType,
+    FActorComponentTickFunction* ThisTickFunction
 ) {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -122,8 +141,12 @@ void UGPUTessellationComponent::TickComponent(
             bInitialized = true;
 
             if (bEnableDebugLogging) {
-                UE_LOG(LogTemp, Warning, TEXT("GPUTessellation: LOD Initialized - Max Factor: %d, Min Factor: %d"),
-                    TessellationSettings.MaxTessellationFactor, TessellationSettings.MinTessellationFactor);
+                UE_LOG(
+                    LogTemp,
+                    Warning,
+                    TEXT("GPUTessellation: LOD Initialized - Max Factor: %d, Min Factor: %d"),
+                    TessellationSettings.MaxTessellationFactor,
+                    TessellationSettings.MinTessellationFactor);
             }
         }
         UpdateDistanceBasedLOD(DeltaTime);
@@ -154,9 +177,15 @@ void UGPUTessellationComponent::TickComponent(
     if (bAutoUpdateRenderTargets) {
         bool bHasRenderTarget = false;
 
-        if (DisplacementTexture && DisplacementTexture->IsA<UTextureRenderTarget>()) { bHasRenderTarget = true; }
-        if (SubtractTexture && SubtractTexture->IsA<UTextureRenderTarget>()) { bHasRenderTarget = true; }
-        if (NormalMapTexture && NormalMapTexture->IsA<UTextureRenderTarget>()) { bHasRenderTarget = true; }
+        if (DisplacementTexture && DisplacementTexture->IsA<UTextureRenderTarget>()) {
+            bHasRenderTarget = true;
+        }
+        if (SubtractTexture && SubtractTexture->IsA<UTextureRenderTarget>()) {
+            bHasRenderTarget = true;
+        }
+        if (NormalMapTexture && NormalMapTexture->IsA<UTextureRenderTarget>()) {
+            bHasRenderTarget = true;
+        }
 
         // Force update when using render targets, with optional FPS limiting
         if (bHasRenderTarget) {
@@ -165,11 +194,12 @@ void UGPUTessellationComponent::TickComponent(
             // Apply FPS limiting if specified (0 = unlimited)
             if (RenderTargetUpdateFPS > 0) {
                 const double CurrentTime = FPlatformTime::Seconds();
-                const double MinTimeBetweenUpdates = 1.0 / static_cast<double>(RenderTargetUpdateFPS);
+                const double MinTimeBetweenUpdates = 1.0 / static_cast<double>(
+                    RenderTargetUpdateFPS);
 
-                if (CurrentTime - LastRenderTargetUpdateTime < MinTimeBetweenUpdates) { bShouldUpdate = false; } else {
-                    LastRenderTargetUpdateTime = CurrentTime;
-                }
+                if (CurrentTime - LastRenderTargetUpdateTime < MinTimeBetweenUpdates) {
+                    bShouldUpdate = false;
+                } else { LastRenderTargetUpdateTime = CurrentTime; }
             }
 
             if (bShouldUpdate) { MarkRenderStateDirty(); }
@@ -190,7 +220,8 @@ void UGPUTessellationComponent::OnRegister() {
 void UGPUTessellationComponent::OnUnregister() { Super::OnUnregister(); }
 
 #if WITH_EDITOR
-void UGPUTessellationComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) {
+void UGPUTessellationComponent::PostEditChangeProperty(
+    FPropertyChangedEvent& PropertyChangedEvent) {
     Super::PostEditChangeProperty(PropertyChangedEvent);
 
     // Update mesh when properties change
@@ -215,7 +246,9 @@ void UGPUTessellationComponent::SetNormalMapTexture(UTexture* InTexture) {
     UpdateTessellatedMesh();
 }
 
-void UGPUTessellationComponent::SetMaterial(const int32 ElementIndex, UMaterialInterface* InMaterial) {
+void UGPUTessellationComponent::SetMaterial(
+    const int32 ElementIndex,
+    UMaterialInterface* InMaterial) {
     if (ElementIndex == 0) {
         Material = InMaterial;
         MarkRenderStateDirty();
@@ -227,7 +260,9 @@ void UGPUTessellationComponent::UpdateSettings(const FGPUTessellationSettings& N
     UpdateTessellatedMesh();
 }
 
-FIntPoint UGPUTessellationComponent::GetTessellationResolution() const { return CalculateGridResolution(); }
+FIntPoint UGPUTessellationComponent::GetTessellationResolution() const {
+    return CalculateGridResolution();
+}
 
 int32 UGPUTessellationComponent::GetVertexCount() const {
     const FIntPoint Res = CalculateGridResolution();
@@ -244,7 +279,8 @@ void UGPUTessellationComponent::MarkRenderStateDirty() { Super::MarkRenderStateD
 FIntPoint UGPUTessellationComponent::CalculateGridResolution() const {
     // Calculate resolution based on tessellation factor
     // When LOD is enabled, use the calculated LOD factor; otherwise use user's TessellationFactor
-    const int32 EffectiveTessellationFactor = TessellationSettings.LODMode != EGPUTessellationLODMode::Disabled
+    const int32 EffectiveTessellationFactor = TessellationSettings.LODMode !=
+        EGPUTessellationLODMode::Disabled
         ? LastAppliedTessFactor
         : TessellationSettings.TessellationFactor;
 
@@ -278,7 +314,8 @@ void UGPUTessellationComponent::UpdateDistanceBasedLOD(const float DeltaTime) {
     // In editor, use editor viewport camera
     else if (GEditor != nullptr && GEditor->GetActiveViewport() != nullptr) {
         const FViewport* Viewport = GEditor->GetActiveViewport();
-        const FEditorViewportClient* ViewportClient = static_cast<FEditorViewportClient*>(Viewport->GetClient());
+        const FEditorViewportClient* ViewportClient = static_cast<FEditorViewportClient*>(Viewport->
+            GetClient());
         if (ViewportClient != nullptr) {
             CameraPos = ViewportClient->GetViewLocation();
             bFoundCamera = true;
@@ -287,7 +324,9 @@ void UGPUTessellationComponent::UpdateDistanceBasedLOD(const float DeltaTime) {
 #endif
 
     if (!bFoundCamera) {
-        if (bEnableDebugLogging) { UE_LOG(LogTemp, Warning, TEXT("GPUTessellation LOD: NO CAMERA FOUND!")); }
+        if (bEnableDebugLogging) {
+            UE_LOG(LogTemp, Warning, TEXT("GPUTessellation LOD: NO CAMERA FOUND!"));
+        }
         return;
     }
 
@@ -298,7 +337,10 @@ void UGPUTessellationComponent::UpdateDistanceBasedLOD(const float DeltaTime) {
     // Account for component scale - larger objects should use LOD at proportionally larger distances
     // Use the maximum scale component to represent overall size
     const FVector Scale3D = GetComponentScale();
-    const float MaxScale = FMath::Max3(FMath::Abs(Scale3D.X), FMath::Abs(Scale3D.Y), FMath::Abs(Scale3D.Z));
+    const float MaxScale = FMath::Max3(
+        FMath::Abs(Scale3D.X),
+        FMath::Abs(Scale3D.Y),
+        FMath::Abs(Scale3D.Z));
 
     // Scale LOD distances by the component scale
     // This makes LOD distances work consistently regardless of actor scale
@@ -311,7 +353,10 @@ void UGPUTessellationComponent::UpdateDistanceBasedLOD(const float DeltaTime) {
     LastCameraPosition = CameraPos;
 
     // Calculate target LOD factor based on distance (using scaled distances)
-    const int32 TargetTessFactor = CalculateLODFactorScaled(Distance, ScaledMinDistance, ScaledMaxDistance);
+    const int32 TargetTessFactor = CalculateLODFactorScaled(
+        Distance,
+        ScaledMinDistance,
+        ScaledMaxDistance);
 
     // Debug logging (throttled) - show LOD calculation every 2 seconds
     if (bEnableDebugLogging) {
@@ -321,33 +366,71 @@ void UGPUTessellationComponent::UpdateDistanceBasedLOD(const float DeltaTime) {
 
             // Calculate which zone we're in (using scaled distances)
             FString DistanceZone;
-            if (Distance <= ScaledMinDistance) { DistanceZone = TEXT("NEAR (Max Tessellation)"); } else if (Distance >=
+            if (Distance <= ScaledMinDistance) {
+                DistanceZone = TEXT("NEAR (Max Tessellation)");
+            } else if (Distance >=
                 ScaledMaxDistance) { DistanceZone = TEXT("FAR (Min Tessellation)"); } else {
                 const float DistanceRange = ScaledMaxDistance - ScaledMinDistance;
                 const float DistanceInRange = Distance - ScaledMinDistance;
                 const float Percentage = DistanceInRange / DistanceRange * 100.0f;
-                DistanceZone = FString::Printf(TEXT("TRANSITION (%.1f%% through range)"), Percentage);
+                DistanceZone = FString::Printf(
+                    TEXT("TRANSITION (%.1f%% through range)"),
+                    Percentage);
             }
 
             UE_LOG(LogTemp, Warning, TEXT("GPUTessellation LOD Status:"));
-            UE_LOG(LogTemp, Warning, TEXT("  Camera: %s (moved %.1f since last frame)"), *CameraPos.ToString(),
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("  Camera: %s (moved %.1f since last frame)"),
+                *CameraPos.ToString(),
                 CameraMovement);
-            UE_LOG(LogTemp, Warning, TEXT("  Component: %s, Scale: %.2f (max component)"), *ComponentPos.ToString(),
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("  Component: %s, Scale: %.2f (max component)"),
+                *ComponentPos.ToString(),
                 MaxScale);
-            UE_LOG(LogTemp, Warning, TEXT("  Distance: %.1f units (%.1f meters) - %s"), Distance, Distance / 100.0f,
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("  Distance: %.1f units (%.1f meters) - %s"),
+                Distance,
+                Distance / 100.0f,
                 *DistanceZone);
-            UE_LOG(LogTemp, Warning, TEXT("  Distance Range (scaled): %.1f to %.1f (base: %.1f to %.1f, scale: %.2fx)"),
-                ScaledMinDistance, ScaledMaxDistance,
-                TessellationSettings.MinTessellationDistance, TessellationSettings.MaxTessellationDistance,
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("  Distance Range (scaled): %.1f to %.1f (base: %.1f to %.1f, scale: %.2fx)"),
+                ScaledMinDistance,
+                ScaledMaxDistance,
+                TessellationSettings.MinTessellationDistance,
+                TessellationSettings.MaxTessellationDistance,
                 MaxScale);
-            UE_LOG(LogTemp, Warning, TEXT("  Target LOD: %d, Current: %.1f, Applied: %d"), TargetTessFactor,
-                CurrentLODLevel, LastAppliedTessFactor);
-            UE_LOG(LogTemp, Warning, TEXT("  Factor Range: %d (max) to %d (min)"),
-                TessellationSettings.MaxTessellationFactor, TessellationSettings.MinTessellationFactor);
-            UE_LOG(LogTemp, Warning, TEXT("  User TessellationFactor: %d (NOT modified by LOD)"),
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("  Target LOD: %d, Current: %.1f, Applied: %d"),
+                TargetTessFactor,
+                CurrentLODLevel,
+                LastAppliedTessFactor);
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("  Factor Range: %d (max) to %d (min)"),
+                TessellationSettings.MaxTessellationFactor,
+                TessellationSettings.MinTessellationFactor);
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("  User TessellationFactor: %d (NOT modified by LOD)"),
                 TessellationSettings.TessellationFactor);
-            UE_LOG(LogTemp, Warning, TEXT("  Mode: %s, DeltaTime: %.4f"),
-                World->WorldType == EWorldType::Editor ? TEXT("Editor") : TEXT("Game"), DeltaTime);
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("  Mode: %s, DeltaTime: %.4f"),
+                World->WorldType == EWorldType::Editor ? TEXT("Editor") : TEXT("Game"),
+                DeltaTime);
         }
     }
 
@@ -369,13 +452,26 @@ void UGPUTessellationComponent::UpdateDistanceBasedLOD(const float DeltaTime) {
         if (bEnableDebugLogging) {
             UE_LOG(LogTemp, Warning, TEXT("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
             UE_LOG(LogTemp, Warning, TEXT("GPUTessellation: LOD TRANSITION"));
-            UE_LOG(LogTemp, Warning, TEXT("  Change: %d -> %d (diff: %d, hysteresis: %d)"),
-                LastAppliedTessFactor, NewTessFactor, FMath::Abs(NewTessFactor - LastAppliedTessFactor),
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("  Change: %d -> %d (diff: %d, hysteresis: %d)"),
+                LastAppliedTessFactor,
+                NewTessFactor,
+                FMath::Abs(NewTessFactor - LastAppliedTessFactor),
                 TessellationSettings.LODHysteresis);
-            UE_LOG(LogTemp, Warning, TEXT("  Distance: %.1f units (%.1f meters)"), Distance, Distance / 100.0f);
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("  Distance: %.1f units (%.1f meters)"),
+                Distance,
+                Distance / 100.0f);
             UE_LOG(LogTemp, Warning, TEXT("  Camera: %s"), *CameraPos.ToString());
             UE_LOG(LogTemp, Warning, TEXT("  Component: %s"), *ComponentPos.ToString());
-            UE_LOG(LogTemp, Warning, TEXT("  TessellationFactor preserved: %d"),
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("  TessellationFactor preserved: %d"),
                 TessellationSettings.TessellationFactor);
             UE_LOG(LogTemp, Warning, TEXT("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
         }
@@ -406,7 +502,8 @@ void UGPUTessellationComponent::UpdateDiscreteLOD(float DeltaTime) {
     // In editor, use editor viewport camera
     else if (GEditor != nullptr && GEditor->GetActiveViewport() != nullptr) {
         const FViewport* Viewport = GEditor->GetActiveViewport();
-        const FEditorViewportClient* ViewportClient = static_cast<FEditorViewportClient*>(Viewport->GetClient());
+        const FEditorViewportClient* ViewportClient = static_cast<FEditorViewportClient*>(Viewport->
+            GetClient());
         if (ViewportClient != nullptr) {
             CameraPos = ViewportClient->GetViewLocation();
             bFoundCamera = true;
@@ -422,7 +519,10 @@ void UGPUTessellationComponent::UpdateDiscreteLOD(float DeltaTime) {
 
     // Account for component scale
     const FVector Scale3D = GetComponentScale();
-    const float MaxScale = FMath::Max3(FMath::Abs(Scale3D.X), FMath::Abs(Scale3D.Y), FMath::Abs(Scale3D.Z));
+    const float MaxScale = FMath::Max3(
+        FMath::Abs(Scale3D.X),
+        FMath::Abs(Scale3D.Y),
+        FMath::Abs(Scale3D.Z));
     const float ScaledDistance = Distance / MaxScale;
 
     // Determine which discrete level to use based on distance thresholds
@@ -433,12 +533,14 @@ void UGPUTessellationComponent::UpdateDiscreteLOD(float DeltaTime) {
         TargetTessFactor = StaticCast<int32>(TessellationSettings.DiscreteLODLevels[0]);
 
         // Check each distance threshold
-        for (int32 i = 0; i < TessellationSettings.DiscreteLODDistances.Num() && i < TessellationSettings.
+        for (int32 i = 0; i < TessellationSettings.DiscreteLODDistances.Num() && i <
+             TessellationSettings.
              DiscreteLODLevels.Num(); ++i) {
             if (ScaledDistance > TessellationSettings.DiscreteLODDistances[i]) {
                 // Beyond this threshold, use next lower level if available
                 if (i + 1 < TessellationSettings.DiscreteLODLevels.Num()) {
-                    TargetTessFactor = StaticCast<int32>(TessellationSettings.DiscreteLODLevels[i + 1]);
+                    TargetTessFactor = StaticCast<int32>(
+                        TessellationSettings.DiscreteLODLevels[i + 1]);
                 }
             } else {
                 // Within threshold, use current level
@@ -474,8 +576,13 @@ void UGPUTessellationComponent::UpdateDiscreteLOD(float DeltaTime) {
         MarkRenderStateDirty();
 
         if (bEnableDebugLogging) {
-            UE_LOG(LogTemp, Warning, TEXT("GPUTessellation Discrete LOD: Distance=%.1f (scaled=%.1f), Level=%d"),
-                Distance, ScaledDistance, TargetTessFactor);
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("GPUTessellation Discrete LOD: Distance=%.1f (scaled=%.1f), Level=%d"),
+                Distance,
+                ScaledDistance,
+                TargetTessFactor);
         }
     }
 }
@@ -502,7 +609,8 @@ void UGPUTessellationComponent::UpdatePatchBasedLOD(float DeltaTime) {
     // In editor, use editor viewport camera
     if (!bFoundCamera && GEditor != nullptr && GEditor->GetActiveViewport() != nullptr) {
         const FViewport* Viewport = GEditor->GetActiveViewport();
-        const FEditorViewportClient* ViewportClient = static_cast<FEditorViewportClient*>(Viewport->GetClient());
+        const FEditorViewportClient* ViewportClient = static_cast<FEditorViewportClient*>(Viewport->
+            GetClient());
         if (ViewportClient != nullptr) {
             CameraPos = ViewportClient->GetViewLocation();
             bFoundCamera = true;
@@ -524,11 +632,15 @@ void UGPUTessellationComponent::UpdatePatchBasedLOD(float DeltaTime) {
 
     // Check if camera moved significantly (threshold to avoid constant updates)
     const float CameraMovement = FVector::Dist(CameraPos, LastCameraPosition);
-    constexpr float UpdateThreshold = 100.0f; // Update if camera moved more than 100 units (1 meter)
+    constexpr float UpdateThreshold = 100.0f;
+    // Update if camera moved more than 100 units (1 meter)
 
     // Scale threshold by component scale for larger objects
     const FVector Scale3D = GetComponentScale();
-    const float MaxScale = FMath::Max3(FMath::Abs(Scale3D.X), FMath::Abs(Scale3D.Y), FMath::Abs(Scale3D.Z));
+    const float MaxScale = FMath::Max3(
+        FMath::Abs(Scale3D.X),
+        FMath::Abs(Scale3D.Y),
+        FMath::Abs(Scale3D.Z));
     const float ScaledThreshold = UpdateThreshold * MaxScale;
 
     // Check if patch configuration changed
@@ -543,12 +655,16 @@ void UGPUTessellationComponent::UpdatePatchBasedLOD(float DeltaTime) {
         SendRenderDynamicData_Concurrent();
 
         if (bEnableDebugLogging) {
-            UE_LOG(LogTemp, Warning,
+            UE_LOG(
+                LogTemp,
+                Warning,
                 TEXT(
                     "GPUTessellation Patch LOD: Camera moved %.1f units (threshold %.1f) - "
                     "Updating patches with camera at: %s"
                 ),
-                CameraMovement, ScaledThreshold, *CameraPos.ToString());
+                CameraMovement,
+                ScaledThreshold,
+                *CameraPos.ToString());
         }
     }
 }
@@ -560,7 +676,9 @@ void UGPUTessellationComponent::UpdateDensityBasedLOD(const float DeltaTime) {
     UpdateDistanceBasedLOD(DeltaTime);
 }
 
-float UGPUTessellationComponent::CalculateDistanceToCamera(const FVector& CameraPos, FVector& OutComponentPos) const {
+float UGPUTessellationComponent::CalculateDistanceToCamera(
+    const FVector& CameraPos,
+    FVector& OutComponentPos) const {
     OutComponentPos = GetComponentLocation();
 
     if (!TessellationSettings.bUseDistanceToBounds) {
@@ -603,7 +721,8 @@ void UGPUTessellationComponent::SendRenderDynamicData_Concurrent() {
         DynamicData->LocalToWorld = GetComponentTransform().ToMatrixWithScale();
 
         // Send to scene proxy on render thread
-        FGPUTessellationSceneProxy* TessSceneProxy = static_cast<FGPUTessellationSceneProxy*>(SceneProxy);
+        FGPUTessellationSceneProxy* TessSceneProxy = static_cast<FGPUTessellationSceneProxy*>(
+            SceneProxy);
         ENQUEUE_RENDER_COMMAND(SendGPUTessellationDynamicData)(
             [TessSceneProxy, DynamicData]([[maybe_unused]] FRHICommandListImmediate& RHICmdList) {
                 TessSceneProxy->UpdateDynamicData_RenderThread(DynamicData);
@@ -612,7 +731,9 @@ void UGPUTessellationComponent::SendRenderDynamicData_Concurrent() {
 }
 
 int32 UGPUTessellationComponent::CalculateLODFactorScaled(
-    const float Distance, const float ScaledMinDistance, const float ScaledMaxDistance
+    const float Distance,
+    const float ScaledMinDistance,
+    const float ScaledMaxDistance
 ) const {
     // Distance-based falloff with min and max distance ranges
     // Distance < MinDistance: Use MaxTessellationFactor (high detail when close)
@@ -643,8 +764,10 @@ int32 UGPUTessellationComponent::CalculateLODFactorScaled(
     }
 
     const float LerpedFactor = FMath::Lerp(
-        static_cast<float>(TessellationSettings.MaxTessellationFactor), // Close distance
-        static_cast<float>(TessellationSettings.MinTessellationFactor), // Far distance
+        static_cast<float>(TessellationSettings.MaxTessellationFactor),
+        // Close distance
+        static_cast<float>(TessellationSettings.MinTessellationFactor),
+        // Far distance
         t
     );
 
@@ -681,8 +804,10 @@ int32 UGPUTessellationComponent::CalculateLODFactor(const float Distance) const 
     }
 
     const float LerpedFactor = FMath::Lerp(
-        static_cast<float>(TessellationSettings.MaxTessellationFactor), // Close distance
-        static_cast<float>(TessellationSettings.MinTessellationFactor), // Far distance
+        static_cast<float>(TessellationSettings.MaxTessellationFactor),
+        // Close distance
+        static_cast<float>(TessellationSettings.MinTessellationFactor),
+        // Far distance
         t
     );
 
