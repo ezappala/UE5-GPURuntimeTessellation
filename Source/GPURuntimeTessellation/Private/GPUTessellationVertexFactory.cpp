@@ -35,8 +35,8 @@ class FGPUTessellationVertexFactoryShaderParameters : public FVertexFactoryShade
         FMeshDrawSingleShaderBindings& ShaderBindings,
         FVertexInputStreamArray& VertexStreams
     ) const {
-        const FGPUTessellationVertexFactory* GPUVertexFactory = static_cast<const FGPUTessellationVertexFactory*>(
-            VertexFactory);
+        const FGPUTessellationVertexFactory* GPUVertexFactory =
+            static_cast<const FGPUTessellationVertexFactory*>(VertexFactory);
 
         // Bind GPU buffer SRVs to shader parameters
         if (PositionBufferParameter.IsBound() && GPUVertexFactory->PositionSRV.IsValid()) {

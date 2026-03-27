@@ -37,6 +37,10 @@ struct FVertexFactoryInterpolantsVSToPS {
     float4 TexCoords[(NUM_TEX_COORD_INTERPOLATORS + 1) / 2] : TEXCOORD0;
 #endif
 
+#if INTERPOLATE_VERTEX_COLOR
+    float4 Color : COLOR0;
+#endif
+
 #if INSTANCED_STEREO
     nointerpolation uint EyeIndex : PACKED_EYE_INDEX;
 #endif
